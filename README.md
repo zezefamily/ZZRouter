@@ -22,7 +22,7 @@ pod 'ZZRouter'
 
 ## Author
 
-wuwenmei, wuwenmei@100tal.com
+zezefamily, zezefamily@163.com
 
 ## License
 
