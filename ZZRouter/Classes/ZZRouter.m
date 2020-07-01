@@ -26,9 +26,8 @@ static char kAssociatedParamsObjectKey;
 
 @end
 
-
 @interface ZZRouter ()
-
+@property (nonatomic,strong) NSMutableDictionary *routePathAndStyles;
 @end
 @implementation ZZRouter
 
@@ -45,54 +44,62 @@ static char kAssociatedParamsObjectKey;
 - (instancetype)init
 {
     if(self == [super init]){
-        
+        self.routePathAndStyles = [NSMutableDictionary dictionary];
     }
     return self;
 }
 
-- (BOOL)zz_routeTo:(NSString *)route from:(id)viewController target:(NSString *)targetName
+- (BOOL)zz_routeTo:(NSString *)route from:(UIViewController *)from params:(NSDictionary * __nullable)params style:(ZZModalStyle * __nullable)modalStyle callBack:(RouteCallBack __nullable)callBack
 {
-    return [self zz_routeTo:route from:viewController target:targetName params:nil style:nil callBack:nil];
-}
-
-- (BOOL)zz_routeTo:(NSString *)route from:(id)viewController target:(NSString *)targetName params:(NSDictionary *)params
-{
-    return [self zz_routeTo:route from:viewController target:targetName params:params style:nil callBack:nil];
-}
-
-- (BOOL)zz_routeTo:(NSString *)route from:(id)viewController target:(NSString *)targetName params:(NSDictionary *)params style:(ZZModalStyle *)modalStyle
-{
-    return [self zz_routeTo:route from:viewController target:targetName params:params style:modalStyle callBack:nil];
-}
-
-- (BOOL)zz_routeTo:(NSString *)route from:(id)viewController target:(NSString *)targetName params:(NSDictionary * __nullable)params style:(ZZModalStyle * __nullable)modalStyle callBack:(RouteCallBack __nullable)callBack
-{
-    BOOL canOpen = NO;
-    
     if(modalStyle == nil){
         modalStyle = [ZZModalStyle defalutStyle];
     }
-    
-    Class targetClass = objc_getClass([targetName UTF8String]);
-    SEL selector = NSSelectorFromString(@"createViewController");
-    if([targetClass respondsToSelector:selector]){
-        //创建
-        UIViewController *targetController = [targetClass createViewController];
-        //传参
-        if(params != nil){
-            [targetController setValuesForKeysWithDictionary:params];
-        }
-        if(callBack){
-            targetController.routeCallBack = callBack;
-        }
-        //跳转
-        [viewController presentViewController:targetController animated:YES completion:nil];
-        canOpen = YES;
-    }else{
-        canOpen = NO;
-        @throw [NSException exceptionWithName:@"路由跳转异常" reason:@"target没有实现必要的协议" userInfo:@{@"func":@"+(instancetype)createViewController"}];
+    //获取目标路由
+    NSString *targetName = [ZZRoutePageConfig getTargetNameWithRoutPath:route];
+    if(targetName == nil || targetName.length == 0){
+        NSLog(@"没有找到目标路由/未配置");
+        return NO;
     }
-    return canOpen;
+    //创建
+    UIViewController *targetController = [self getViewControllerWithTargetName:targetName];
+    //传参
+    if(params != nil){
+        [targetController setValuesForKeysWithDictionary:params];
+    }
+    if(callBack){
+        targetController.routeCallBack = callBack;
+    }
+    targetController.modalPresentationStyle =  modalStyle.modalPresentationStyle;
+    targetController.modalTransitionStyle = modalStyle.modalTransitionStyle;
+    //跳转
+    if(modalStyle.type == ZZModalStyleTypePush){
+        if(from.navigationController && from != nil){
+            [from.navigationController pushViewController:targetController animated:YES];
+        }
+    }else{
+        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:targetController];
+        nav.modalPresentationStyle = modalStyle.modalPresentationStyle;
+        nav.modalTransitionStyle = modalStyle.modalTransitionStyle;
+        [from presentViewController:nav animated:YES completion:nil];
+    }
+    return YES;
+}
+
+- (void)zz_leavePage:(UIViewController *)vc
+{
+    if([vc.navigationController.topViewController isEqual:vc.navigationController.viewControllers[0]]){
+        [vc dismissViewControllerAnimated:YES completion:nil];
+    }else{
+        [vc.navigationController popViewControllerAnimated:YES];
+    }
+}
+
+- (UIViewController *)getViewControllerWithTargetName:(NSString *)targetName
+{
+    Class targetClass = objc_getClass([targetName UTF8String]);
+    //创建
+    UIViewController *targetController = [targetClass new];
+    return targetController;
 }
 
 @end
@@ -104,6 +111,7 @@ static char kAssociatedParamsObjectKey;
     if(self == [super init]){
         self.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
         self.modalPresentationStyle = UIModalPresentationFullScreen;
+        self.type = ZZModalStyleTypePush;
     }
     return self;
 }
@@ -111,6 +119,20 @@ static char kAssociatedParamsObjectKey;
 + (ZZModalStyle *)defalutStyle
 {
     ZZModalStyle *style = [[ZZModalStyle alloc]init];
+    return style;
+}
+
++ (ZZModalStyle *)pushStyle
+{
+    ZZModalStyle *style = [[ZZModalStyle alloc]init];
+    style.type = ZZModalStyleTypePush;
+    return style;
+}
+
++ (ZZModalStyle *)presentStyle
+{
+    ZZModalStyle *style = [[ZZModalStyle alloc]init];
+    style.type = ZZModalStyleTypePresent;
     return style;
 }
 

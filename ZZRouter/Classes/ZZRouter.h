@@ -24,11 +24,28 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface ZZRouter : NSObject
 
+/// 获取路由对象实例
 + (instancetype)zz_instanceRouter;
 
-- (BOOL)zz_routeTo:(NSString *)route from:(id)viewController target:(NSString *)targetName params:(NSDictionary * __nullable)params style:(ZZModalStyle * __nullable)modalStyle callBack:(RouteCallBack __nullable)callBack;
+/// 路由跳转
+/// @param route 路由名称
+/// @param from 当前控制器对象
+/// @param params 传参
+/// @param modalStyle 跳转风格
+/// @param callBack 回调
+- (BOOL)zz_routeTo:(NSString *)route from:(UIViewController *)from params:(NSDictionary * __nullable)params style:(ZZModalStyle * __nullable)modalStyle callBack:(RouteCallBack __nullable)callBack;
+
+/// 返回
+/// @param vc 当前控制器对象
+- (void)zz_leavePage:(UIViewController *)vc;
 
 @end
+
+
+typedef NS_ENUM(NSInteger,ZZModalStyleType){
+    ZZModalStyleTypePush = 0,
+    ZZModalStyleTypePresent = 1,
+};
 
 @interface ZZModalStyle : NSObject
 
@@ -36,9 +53,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic,assign) UIModalPresentationStyle modalPresentationStyle;
 
-@property (nonatomic,assign) BOOL prsentOrPush;
+@property (nonatomic,assign) ZZModalStyleType type;
 
 + (ZZModalStyle *)defalutStyle;
+
++ (ZZModalStyle *)pushStyle;
+
++ (ZZModalStyle *)presentStyle;
 
 @end
 

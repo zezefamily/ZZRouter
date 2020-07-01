@@ -19,8 +19,10 @@
 {
     return @{
         @"/user/detail":@"SecondViewController",
-        @"/user/setting":@"",
+        @"/user/setting":@"SettingViewController",
+        @"/rootNav":@"RootNavViewController",
+        @"/user/third":@"ThirdViewController",
+        @"/user/four":@"FourViewController"
     };
 }
-
 @end
